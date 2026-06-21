@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>fekality</title>
+<style>
+  :root{--bg:#0a0a0d;--panel:#14141a;--border:#2a2a35;--text:#e0e0ea;--dim:#7a7a8c;--muted:#52525e;--accent:#5fb3ff;--accent2:#3d8fdc;--green:#5fd17a;--red:#ff5757}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--text);font:14px/1.5 "Inter",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh}
+  body{display:flex;flex-direction:column;background:radial-gradient(ellipse at top,rgba(95,179,255,.08),transparent 60%),var(--bg)}
+  ::-webkit-scrollbar{width:8px}::-webkit-scrollbar-thumb{background:#2a2a35;border-radius:4px}
+  .brand-top{position:absolute;top:24px;left:28px;font-family:"JetBrains Mono",ui-monospace,monospace;font-weight:800;font-size:18px;letter-spacing:3px;color:var(--accent)}
+  main{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 20px}
+  .redeem{width:100%;max-width:460px;text-align:center}
+  .redeem h1{font-size:42px;font-weight:900;letter-spacing:-.5px;margin-bottom:8px}
+  .redeem h1 span{background:linear-gradient(135deg,var(--accent),#b266ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .redeem .sub{color:var(--dim);font-size:14px;margin-bottom:36px}
+  .redeem input{width:100%;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px 18px;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:16px;letter-spacing:2px;text-align:center;outline:none;color:var(--text);transition:border-color .15s}
+  .redeem input:focus{border-color:var(--accent)}
+  .redeem button{width:100%;margin-top:12px;background:linear-gradient(180deg,var(--accent),var(--accent2));border:none;border-radius:10px;padding:15px;color:#0a0a0c;font-weight:700;font-size:15px;cursor:pointer;letter-spacing:.5px;transition:filter .15s}
+  .redeem button:hover{filter:brightness(1.1)}
+  .redeem button:disabled{filter:grayscale(.5) brightness(.7);cursor:not-allowed}
+  .redeem .msg{margin-top:18px;font-size:13px;min-height:18px}
+  .redeem .msg.err{color:var(--red)} .redeem .msg.ok{color:var(--green)} .redeem .msg.dim{color:var(--dim)}
+  .reveal{margin-top:24px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px;text-align:left;display:none}
+  .reveal.on{display:block;animation:pop .25s ease}
+  @keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .reveal .lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;display:flex;justify-content:space-between}
+  .reveal .lbl .ok{color:var(--green)}
+  .reveal pre{background:#0a0a0c;border:1px solid var(--border);border-radius:6px;padding:14px;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:12px;color:var(--accent);white-space:pre-wrap;word-break:break-all;line-height:1.6;margin-bottom:10px}
+  .reveal button.copy{width:100%;background:var(--accent);color:#0a0a0c;border:none;padding:10px;border-radius:6px;cursor:pointer;font-weight:700;font-size:12px}
+  .diag{position:fixed;bottom:14px;left:0;right:0;text-align:center;font-size:11px;color:var(--muted);font-family:"JetBrains Mono",monospace}
+  footer{text-align:center;padding:20px;color:var(--muted);font-size:11px}
+</style>
+</head>
+<body>
+<div class="brand-top">FEKALITY</div>
+<main>
+  <div class="redeem">
+    <h1>Получи <span>скрипт</span></h1>
+    <div class="sub">Введи свой инвайт-код</div>
+    <input id="code" placeholder="FKL-XXXX-XXXX-XXXX" maxlength="32" autocomplete="off" autocapitalize="characters">
+    <button id="btn">ПОЛУЧИТЬ СКРИПТ</button>
+    <div class="msg" id="msg"></div>
+    <div class="reveal" id="reveal">
+      <div class="lbl"><span>→ loadstring для executor</span><span class="ok">✓ активирован</span></div>
+      <pre id="cmd"></pre>
+      <button class="copy" id="copy">КОПИРОВАТЬ</button>
+    </div>
+  </div>
+</main>
+<div class="diag" id="diag"></div>
+<footer>fekality &copy; 2026</footer>
+<script>
+// ===================================================================
+// CONFIG — ГДЕ ЛЕЖАТ КОДЫ (твой GitHub репозиторий)
+// Если сайт на GitHub Pages — НИЧЕГО менять не надо (определится сам).
+// Если сайт на Netlify/другом — впиши вручную:
+// ===================================================================
+const CONFIG_USER = "";   // например "ivycraft"
+const CONFIG_REPO = "";   // например "fekality"
+const BRANCH      = "main";
+// ===================================================================
+
+let GH_USER = CONFIG_USER, GH_REPO = CONFIG_REPO;
+if ((!GH_USER || !GH_REPO) && location.hostname.endsWith("github.io")){
+  GH_USER = location.hostname.split(".")[0];
+  GH_REPO = (location.pathname.split("/").filter(Boolean)[0]) || "";
+}
+const HAVE_GH = !!(GH_USER && GH_REPO);
+
+const $ = id => document.getElementById(id);
+$("diag").textContent = HAVE_GH ? ("source: github.com/" + GH_USER + "/" + GH_REPO) : "source: локальный invites.txt";
+
+$("code").addEventListener("input", e => e.target.value = e.target.value.toUpperCase());
+$("code").addEventListener("keydown", e => { if (e.key === "Enter") check(); });
+$("btn").addEventListener("click", check);
+$("copy").addEventListener("click", () => {
+  navigator.clipboard.writeText($("cmd").textContent);
+  $("copy").textContent = "✓ СКОПИРОВАНО";
+  setTimeout(() => $("copy").textContent = "КОПИРОВАТЬ", 1200);
+});
+
+function loaderUrl(){
+  // скрипт отдаётся с того же сайта (или с raw, если известен репо)
+  if (HAVE_GH) return "https://raw.githubusercontent.com/" + GH_USER + "/" + GH_REPO + "/" + BRANCH + "/fekality.lua";
+  return location.origin + location.pathname.replace(/[^/]*$/, "") + "fekality.lua";
+}
+
+async function fetchInvites(){
+  // 1) живой GitHub (всегда синхронен с админкой, CORS разрешён)
+  if (HAVE_GH){
+    const api = "https://api.github.com/repos/" + GH_USER + "/" + GH_REPO + "/contents/invites.txt?ref=" + BRANCH + "&t=" + Date.now();
+    try{
+      const r = await fetch(api, { cache:"no-store", headers:{ "Accept":"application/vnd.github.raw+json" } });
+      if (r.ok) return await r.text();
+      if (r.status === 404) return ""; // файла нет = нет кодов
+    }catch(_){}
+    // fallback: raw CDN
+    try{
+      const raw = "https://raw.githubusercontent.com/" + GH_USER + "/" + GH_REPO + "/" + BRANCH + "/invites.txt?t=" + Date.now();
+      const r2 = await fetch(raw, { cache:"no-store" });
+      if (r2.ok) return await r2.text();
+    }catch(_){}
+  }
+  // 2) локальный файл рядом (только если сайт хостится, не file://)
+  const r3 = await fetch("invites.txt?t=" + Date.now(), { cache:"no-store" });
+  if (!r3.ok) throw new Error("не найден invites.txt");
+  return await r3.text();
+}
+
+function parseCodes(txt){
+  return (txt||"").split(/\r?\n/)
+    .map(l => l.trim())
+    .filter(l => l && !l.startsWith("#"))
+    .map(l => {
+      const code = (l.split(/[|;,]/)[0] || "").trim().toUpperCase();
+      const parts = l.split("|").map(x=>x.trim());
+      const exp = parts[2] ? parseInt(parts[2]) : 0;
+      return { code, exp };
+    })
+    .filter(x => x.code);
+}
+
+async function check(){
+  const btn = $("btn"), msg = $("msg");
+  const code = ($("code").value || "").replace(/\s+/g, "").toUpperCase();
+  msg.className = "msg"; msg.textContent = ""; $("reveal").classList.remove("on");
+  if (!code){ msg.className = "msg err"; msg.textContent = "Введи код"; return; }
+  btn.disabled = true; btn.textContent = "ПРОВЕРЯЮ...";
+  try{
+    const txt = await fetchInvites();
+    const items = parseCodes(txt);
+    const found = items.find(i => i.code === code);
+    if (!found){ msg.className = "msg err"; msg.textContent = "Неверный или отозванный код"; return; }
+    if (found.exp && found.exp < Math.floor(Date.now()/1000)){ msg.className = "msg err"; msg.textContent = "Код истёк"; return; }
+    $("cmd").textContent = `loadstring(game:HttpGet("${loaderUrl()}"))()`;
+    $("reveal").classList.add("on");
+    msg.className = "msg ok"; msg.textContent = "✓ Код верен. Скопируй команду ниже.";
+  }catch(e){
+    msg.className = "msg err";
+    msg.textContent = HAVE_GH ? ("Ошибка: " + e.message) : "Открой сайт по https (не файлом) или впиши CONFIG_USER/REPO";
+  }finally{
+    btn.disabled = false; btn.textContent = "ПОЛУЧИТЬ СКРИПТ";
+  }
+}
+</script>
+</body>
+</html>

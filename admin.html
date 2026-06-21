@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>fekality — admin</title>
+<style>
+  :root{--bg:#0a0a0d;--panel:#14141a;--panel2:#1c1c24;--border:#2a2a35;--text:#e0e0ea;--dim:#7a7a8c;--muted:#52525e;--accent:#5fb3ff;--accent2:#3d8fdc;--green:#5fd17a;--red:#ff5757;--yellow:#f5b942}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:radial-gradient(ellipse at top,rgba(95,179,255,.07),transparent 60%),var(--bg);color:var(--text);font:14px/1.5 "Inter",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh;padding:30px 20px}
+  ::-webkit-scrollbar{width:8px}::-webkit-scrollbar-thumb{background:#2a2a35;border-radius:4px}
+  .wrap{max-width:760px;margin:0 auto}
+  .head{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+  .head .logo{font-family:"JetBrains Mono",ui-monospace,monospace;font-weight:800;font-size:22px;letter-spacing:3px;color:var(--accent)}
+  .head .tag{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:2px;padding-top:4px}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:22px;margin-bottom:18px}
+  .card h2{font-size:14px;margin-bottom:14px;color:var(--text);text-transform:uppercase;letter-spacing:1px;font-weight:700}
+  label{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;margin-top:12px}
+  label:first-of-type{margin-top:0}
+  input,select{width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:7px;padding:10px 13px;outline:none;color:var(--text);font-size:13px}
+  input:focus,select:focus{border-color:var(--accent)}
+  input.mono{font-family:"JetBrains Mono",ui-monospace,monospace}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+  .row > div{flex:1;min-width:120px}
+  button{background:linear-gradient(180deg,var(--accent),var(--accent2));color:#0a0a0c;border:none;border-radius:7px;padding:10px 16px;font-weight:700;cursor:pointer;font-size:13px;white-space:nowrap}
+  button:hover{filter:brightness(1.1)}
+  button:disabled{filter:grayscale(.6) brightness(.6);cursor:not-allowed}
+  button.sec{background:var(--panel2);color:var(--text);border:1px solid var(--border);font-weight:500}
+  button.sec:hover{border-color:var(--accent);filter:none}
+  .hint{font-size:11px;color:var(--muted);line-height:1.7;margin-top:10px}
+  .hint a{color:var(--accent)}
+  .hint code{background:var(--panel2);padding:1px 6px;border-radius:3px;color:var(--accent)}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+  .stat{background:var(--panel2);border:1px solid var(--border);border-radius:7px;padding:10px 12px}
+  .stat .l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+  .stat .v{font-size:22px;font-weight:800}
+  .stat.green .v{color:var(--green)}.stat.blue .v{color:var(--accent)}
+  table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
+  th,td{padding:9px 11px;border-bottom:1px solid var(--border);text-align:left}
+  th{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+  tr:last-child td{border-bottom:none}
+  td.mono{font-family:"JetBrains Mono",ui-monospace,monospace}
+  td.dim{color:var(--dim)}
+  .empty{padding:26px;text-align:center;color:var(--muted);font-size:12px}
+  .x{background:transparent;border:1px solid var(--red);color:var(--red);padding:3px 9px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:600}
+  .cp{background:var(--panel2);border:1px solid var(--border);color:var(--text);padding:3px 9px;border-radius:5px;cursor:pointer;font-size:11px;margin-right:5px}
+  .cp:hover{border-color:var(--accent)}
+  .toast{position:fixed;bottom:20px;right:20px;padding:11px 18px;background:var(--panel);border:1px solid var(--border);border-radius:7px;z-index:200;display:none;font-size:12px}
+  .toast.ok{border-color:var(--green);color:var(--green)}.toast.err{border-color:var(--red);color:var(--red)}
+  .badge{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
+  .badge.on{background:var(--green)}.badge.off{background:var(--red)}
+  #panel{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head"><span class="logo">FEKALITY</span><span class="tag">admin panel</span></div>
+
+  <!-- SETUP -->
+  <div class="card" id="setup">
+    <h2>Подключение</h2>
+    <label>GitHub логин (владелец репо)</label>
+    <input id="ghUser" class="mono" placeholder="например ivycraft" autocomplete="off">
+    <label>Имя репозитория</label>
+    <input id="ghRepo" class="mono" placeholder="например fekality" autocomplete="off">
+    <label>Personal Access Token (хранится только в твоём браузере)</label>
+    <input id="ghToken" class="mono" type="password" placeholder="github_pat_... или ghp_..." autocomplete="off">
+    <div class="row" style="margin-top:16px">
+      <button id="connectBtn">подключиться</button>
+    </div>
+    <div class="hint">
+      Токен нужен чтобы панель могла записывать коды в твой репозиторий.<br>
+      Создать: <a href="https://github.com/settings/tokens?type=beta" target="_blank">github.com/settings/tokens</a> → Fine-grained token → выбери свой репо → Repository permissions → <code>Contents: Read and write</code> → Generate.<br>
+      Токен НЕ попадает в код сайта — только в память твоего браузера.
+    </div>
+  </div>
+
+  <!-- PANEL -->
+  <div id="panel">
+    <div class="card">
+      <h2><span class="badge on"></span>Выдать инвайт</h2>
+      <div class="row">
+        <div><label>Кому (комментарий)</label><input id="note" placeholder="ник / дискорд"></div>
+        <div style="max-width:110px"><label>Дней</label><input id="days" type="number" value="30" min="0"></div>
+        <button id="genBtn">+ выдать</button>
+        <button class="sec" id="reloadBtn">↻</button>
+      </div>
+      <div class="hint">Код сразу попадает на сайт и автоматически копируется в буфер. Дней 0 = навсегда.</div>
+    </div>
+
+    <div class="card">
+      <div class="stats">
+        <div class="stat green"><div class="l">active</div><div class="v" id="sActive">0</div></div>
+        <div class="stat blue"><div class="l">total</div><div class="v" id="sTotal">0</div></div>
+        <div class="stat"><div class="l">repo</div><div class="v" style="font-size:13px;padding-top:7px" id="sRepo">—</div></div>
+      </div>
+      <table>
+        <thead><tr><th>code</th><th>note</th><th>expires</th><th></th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div style="text-align:right"><button class="sec" id="logoutBtn">выйти</button></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const FILE = "invites.txt";
+const $ = id => document.getElementById(id);
+const cfg = {
+  user:  localStorage.getItem("fkl_user")  || "",
+  repo:  localStorage.getItem("fkl_repo")  || "",
+  token: localStorage.getItem("fkl_token") || "",
+  sha:   null,
+};
+let lines = []; // raw lines of invites.txt
+
+function toast(m,k){ const t=$("toast"); t.textContent=m; t.className="toast "+(k||""); t.style.display="block"; clearTimeout(toast._t); toast._t=setTimeout(()=>t.style.display="none",2600); }
+function now(){ return Math.floor(Date.now()/1000); }
+function esc(s){ return String(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function api(){ return `https://api.github.com/repos/${cfg.user}/${cfg.repo}/contents/${FILE}`; }
+function headers(){ return { "Authorization":"Bearer "+cfg.token, "Accept":"application/vnd.github+json", "X-GitHub-Api-Version":"2022-11-28" }; }
+function b64enc(s){ return btoa(unescape(encodeURIComponent(s))); }
+function b64dec(s){ return decodeURIComponent(escape(atob(s.replace(/\s/g,"")))); }
+
+async function pull(){
+  const r = await fetch(api()+"?t="+Date.now(), { headers: headers(), cache:"no-store" });
+  if (r.status === 404){ lines = defaultLines(); cfg.sha = null; return; }
+  if (!r.ok) throw new Error("GitHub "+r.status+(r.status===401?" (неверный токен)":r.status===403?" (нет прав Contents:write)":""));
+  const j = await r.json();
+  cfg.sha = j.sha;
+  lines = b64dec(j.content).split(/\r?\n/);
+}
+async function push(msg){
+  const body = { message: msg, content: b64enc(lines.join("\n")) };
+  if (cfg.sha) body.sha = cfg.sha;
+  const r = await fetch(api(), { method:"PUT", headers: {...headers(),"Content-Type":"application/json"}, body: JSON.stringify(body) });
+  if (!r.ok) throw new Error("запись GitHub "+r.status);
+  const j = await r.json();
+  cfg.sha = j.content.sha;
+}
+function defaultLines(){
+  return [
+    "# FEKALITY invites — управляется из admin.html",
+    "# формат: CODE | комментарий | expiresUnix",
+  ];
+}
+
+// ---- parse invite lines (skip comments) ----
+function parsed(){
+  const out = [];
+  lines.forEach((ln, idx) => {
+    const s = ln.trim();
+    if (!s || s.startsWith("#")) return;
+    const parts = s.split("|").map(x=>x.trim());
+    const code = (parts[0]||"").toUpperCase();
+    if (!code) return;
+    out.push({ idx, code, note: parts[1]||"", exp: parts[2] ? parseInt(parts[2]) : 0 });
+  });
+  return out;
+}
+
+function genCode(){
+  const ch = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const part = n => Array.from({length:n}, ()=>ch[Math.floor(Math.random()*ch.length)]).join("");
+  return `FKL-${part(4)}-${part(4)}-${part(4)}`;
+}
+function fmtExp(e){ if(!e) return '<span class="dim">lifetime</span>'; const d=new Date(e*1000); const dead=e<now(); return `<span class="${dead?'':'dim'}" style="${dead?'color:var(--red)':''}">${d.toLocaleDateString("ru")}${dead?' (истёк)':''}</span>`; }
+
+// ================= UI =================
+// авто-определение репо из URL (если открыто на GitHub Pages)
+if (location.hostname.endsWith("github.io")){
+  if (!cfg.user) cfg.user = location.hostname.split(".")[0];
+  if (!cfg.repo) cfg.repo = (location.pathname.split("/").filter(Boolean)[0]) || "";
+}
+$("ghUser").value = cfg.user; $("ghRepo").value = cfg.repo; $("ghToken").value = cfg.token;
+if (cfg.user && cfg.repo && cfg.token) tryAutoConnect();
+
+async function tryAutoConnect(){ try{ await pull(); showPanel(); render(); }catch(e){ /* stay on setup */ } }
+
+$("connectBtn").addEventListener("click", async ()=>{
+  cfg.user = $("ghUser").value.trim();
+  cfg.repo = $("ghRepo").value.trim();
+  cfg.token= $("ghToken").value.trim();
+  if (!cfg.user||!cfg.repo||!cfg.token){ toast("заполни все поля","err"); return; }
+  $("connectBtn").disabled = true; $("connectBtn").textContent = "подключение...";
+  try{
+    await pull();
+    localStorage.setItem("fkl_user",cfg.user);
+    localStorage.setItem("fkl_repo",cfg.repo);
+    localStorage.setItem("fkl_token",cfg.token);
+    showPanel(); render(); toast("подключено","ok");
+  }catch(e){ toast(e.message,"err"); }
+  finally{ $("connectBtn").disabled=false; $("connectBtn").textContent="подключиться"; }
+});
+
+function showPanel(){ $("setup").style.display="none"; $("panel").style.display="block"; $("sRepo").textContent = cfg.user+"/"+cfg.repo; }
+$("logoutBtn").addEventListener("click", ()=>{ localStorage.removeItem("fkl_token"); location.reload(); });
+$("reloadBtn").addEventListener("click", async ()=>{ try{ await pull(); render(); toast("обновлено","ok"); }catch(e){ toast(e.message,"err"); } });
+
+$("genBtn").addEventListener("click", async ()=>{
+  const note = $("note").value.trim().replace(/\|/g,"/");
+  const days = Math.max(0, parseInt($("days").value)||0);
+  const exp  = days>0 ? now()+days*86400 : 0;
+  const ex = parsed().map(p=>p.code);
+  let code; do { code = genCode(); } while (ex.includes(code));
+  const line = `${code} | ${note||"-"} | ${exp}`;
+  $("genBtn").disabled = true; $("genBtn").textContent = "...";
+  try{
+    lines.push(line);
+    await push("add invite "+code);
+    render();
+    try{ await navigator.clipboard.writeText(code); }catch(_){}
+    $("note").value="";
+    toast("✓ "+code+" — скопирован","ok");
+  }catch(e){ lines.pop(); toast(e.message,"err"); }
+  finally{ $("genBtn").disabled=false; $("genBtn").textContent="+ выдать"; }
+});
+
+window.copyCode = c => { navigator.clipboard.writeText(c); toast("copied "+c,"ok"); };
+window.delCode = async (idx,code) => {
+  if (!confirm("Удалить/отозвать "+code+"?")) return;
+  const backup = lines.slice();
+  lines.splice(idx,1);
+  try{ await push("revoke "+code); render(); toast("отозван","ok"); }
+  catch(e){ lines = backup; toast(e.message,"err"); }
+};
+
+function render(){
+  const items = parsed();
+  const active = items.filter(i=>!i.exp || i.exp>now()).length;
+  $("sActive").textContent = active;
+  $("sTotal").textContent  = items.length;
+  if (!items.length){ $("tbody").innerHTML = '<tr><td colspan="4" class="empty">Нет инвайтов. Создай первый сверху.</td></tr>'; return; }
+  $("tbody").innerHTML = items.slice().reverse().map(i=>`<tr>
+    <td class="mono">${esc(i.code)}</td>
+    <td class="dim">${esc(i.note==="-"?"":i.note)}</td>
+    <td>${fmtExp(i.exp)}</td>
+    <td style="text-align:right;white-space:nowrap">
+      <button class="cp" onclick="copyCode('${esc(i.code)}')">copy</button>
+      <button class="x" onclick="delCode(${i.idx},'${esc(i.code)}')">×</button>
+    </td></tr>`).join("");
+}
+</script>
+</body>
+</html>
