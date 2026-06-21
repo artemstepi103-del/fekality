@@ -1,2 +1,4 @@
 # FEKALITY invites — управляется из admin.html (не редактируй руками если не надо)
 # формат: CODE | комментарий | expiresUnix
+
+FKL-CKTD-BJUS-UNM7 | - | 1784657988
